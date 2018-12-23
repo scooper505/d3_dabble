@@ -1,14 +1,14 @@
 //define SVG area
 
 var svgWidth = 960;
-var svgHeight = 500;
+var svgHeight = 600;
 
 // define chart margins as an object
 
 var chartMargins = {
 	top: 20,
 	bottom: 40,
-	right: 60,
+	right: 100,
 	left: 100
 };
 
@@ -25,7 +25,7 @@ var chartHeight = svgHeight - chartMargins.top - chartMargins.bottom;
 var svg = d3.select("#scatter")
 	.append("svg")
 	.attr("height", svgHeight)
-	.attr("widgth", svgWidth);
+	.attr("width", svgWidth);
 
 var chartGroup = svg.append("g")
 	.attr("transform", `translate(${chartMargins.left}, ${chartMargins.top})`);
@@ -79,14 +79,14 @@ d3.csv("assets/data/data.csv")
     		.attr("opacity", ".5");
 
 
-    		// Create axes labels
-    	// chartGroup.append("text")
-    	// 	.attr("transform", "rotate(-90)")
-    	// 	.attr("y", 0 - chartMargins.left +40)
-    	// 	.attr("x", 0 - (chartHeight/2))
-    	// 	.attr("dy", "1em")
-    	// 	.attr("class", "axisText")
-    	// 	.text("axis lable side")
+    	// Create axes labels
+    	chartGroup.append("text")
+    		.attr("transform", "rotate(-90)")
+    		.attr("y", 0 - chartMargins.left +40)
+    		.attr("x", 0 - (chartHeight/2))
+    		.attr("dy", "1em")
+    		.attr("class", "axisText")
+    		.text("axis lable side")
 
 
     	chartGroup.append("text")
