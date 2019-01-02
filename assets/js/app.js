@@ -30,14 +30,67 @@ var svg = d3.select("#scatter")
 var chartGroup = svg.append("g")
 	.attr("transform", `translate(${chartMargins.left}, ${chartMargins.top})`);
 
+// initial parameters
+var chosenXAxis = "obesity";
+
+var chosenYAxis = "smokes"
+
+// create functions for updating the x and y scale
+function xScale(censusData, chosenXAxis) {
+	var xLinearScale = d3.scaleLinear()
+	.domain([d3.min(censusData, d => d[chosenXAxis]) * 0.8,
+		d3.max(hairData, d => d[chosenXAxis]) * 1.2])
+	.range([0, chartWidth]);
+
+	return xLinearScale
+};
+
+function yScale(censusData, chosenYAxis) {
+	var yLinearScale = d3.scaleLinear()
+	.domain([d3.min(censusData, d => d[chosenYAxis]) * 0.8,
+		d3.max(censusData, d => d[chosenYAxis]) * 1.2])
+	.range([chartHeight, 0])
+
+	return yLinearScale
+};
 
 
-//Import data form csv
+// function that will be used for updates Axis variables when axes are clicked
+function renderXAxes(newXScale, xAxis) {
+	var bottomAxis = d3.axisBottom(newXScale);
+
+	xAxis.transition()
+		.duration(1000)
+		.call(bottomAxis);
+}
+
+function renderYAxes(newYScale, yAxis) {
+	var bottomAxis = d3.axisLeft(newXScale);
+
+	xAxis.transition()
+		.duration(1000)
+		.call(leftAxis);
+}
+
+// function for updating  the circle group with transistion to new circles
+function renderCircles(circlesGroup, newXScale, chosenXAxis, newYScale, chosenYAxis) {
+	circlesGroup.transistion()
+		.duration(1000)
+		.attr("cx", d => newXScale(d[chosenXAxis]));
+		// .attr("cy", d => newYScale(d[chosenYAxis]));
+
+	return circlesGroup;
+}
+
+
+
+//Import data form csv then execute the following functions
 d3.csv("assets/data/data.csv")
-	.then(function(data) {
-	console.log(data)
+	.then(function(censusData) {
+	console.log(censusData)
 
-		data.forEach(function(data) {
+		// parse data
+		censusData.forEach(function(data) {
 			data.poverty = +data.poverty;
 			data.povertyMOE = +data.povertyMOE;
 			data.age = +data.age;
@@ -47,44 +100,48 @@ d3.csv("assets/data/data.csv")
 			data.healthcare = +data.healthcare;
 			data.healthcareLow = +data.healthcareLow;
 			data.healthcareHigh = +data.healthcareHigh;
-			data.obesity = +data.obesity
-			data.obesityLow = +data.obesityLow
-			data.obesityHigh = +data.obesityHigh
-			data.smokes = +data.smokes
-			data.smokesHigh = +data.smokesHigh
-			data.smokesLow = +data.smokesLow
+			data.obesity = +data.obesity;
+			data.obesityLow = +data.obesityLow;
+			data.obesityHigh = +data.obesityHigh;
+			data.smokes = +data.smokes;
+			data.smokesHigh = +data.smokesHigh;
+			data.smokesLow = +data.smokesLow;
 		});
 
 
+
 		// Create Scale functions
-		var xLinearScale = d3.scaleLinear()
-			.domain([20, d3.max(data, d => d.obesity)])
-			.range([0, chartWidth]);
+		var xLinearScale = xScale(censusData, chosenXAxis);
+		
 
-		var yLinearScale = d3.scaleLinear()
-      		.domain([0, d3.max(data, d => d.smokes)])
-      		.range([chartHeight, 0]);
+		var yLinearScale = yScale(censusData, chosenYAxis);
 
+
+	
       	
       	// create axis functions
       	var bottomAxis = d3.axisBottom(xLinearScale);
     	var leftAxis = d3.axisLeft(yLinearScale);
 
-    	// append axes to chart
-    	chartGroup.append("g")
+    	// append x axis to chart
+    	var xAxis = chartGroup.append("g")
+    		.classed("x-axis", true)
     		.attr("transform", `translate(0, ${chartHeight})`)
     		.call(bottomAxis);
 
-    	chartGroup.append("g")
-    		.call(leftAxis);
+    	// append y axis to chart
+    	var yAxis = chartGroup.append("g")
+    		.classed("y-axis", true)
+    		.call(leftAxis)
 
 
 
-    	// Create circles
+
+    	// Create circles and append initial circles
     	var circlesGroup = chartGroup.selectAll("circle")
-    		.data(data)
+    		.data()
     		.enter()
-    			.append("circle")
+    		.append("circle")
     		.attr("cx", d => xLinearScale(d.obesity))
     		.attr("cy", d => yLinearScale(d.smokes))
     		.attr("r", "15")
@@ -92,20 +149,50 @@ d3.csv("assets/data/data.csv")
     		.attr("opacity", ".5");
 
 
-    	// Create axes labels
+    	// Create group for multiple y axes labels and append labels
+    	var ylabelsgroup = chartGroup.append("g")
+
     	chartGroup.append("text")
     		.attr("transform", "rotate(-90)")
     		.attr("y", 0 - chartMargins.left +40)
     		.attr("x", 0 - (chartHeight/2))
     		.attr("dy", "1em")
-    		.attr("class", "axisText")
+    		.classed("axisText", true)
     		.text("Smokes")
 
+		// Create group for multiple x axes labels and append
 
-    	chartGroup.append("text")
-      		.attr("transform", `translate(${chartWidth / 2}, ${chartHeight + chartMargins.top + 30})`)
-      		.attr("class", "axisText")
-      		.text("Obesity")
+		var xlabelsGroup = chartGroup.append("g")
+			.attr("transform", `translate(${width / 2}, ${chartHeight + chartMargin.top + 20})`);
+
+    	var obesityLabel = xlabelsGroup.append("text")
+      		.attr("x", 0)
+      		.attr("y",20)
+      		.attr("value", "obesity")
+      		.classed("active", true)
+      		.text("Obesity");
+
+      	// event listener for x axis selection
+     	// xlabelsGroup.selectAll("text")
+     	// 	.on("click", function() {
+     	// 		var value = d3.select(this).attr("value"):
+     	// 		if (value != chhosenXAxis) {
+     	// 			chosenXAxis = value;
+
+     	// 			xLinearScale = xScale(date, chosenXAxis);
+
+     	// 			xAxis = 
+
+     	// 			circlesGroup = 
+
+     	// 			if (chosenXAxis === "") {
+     	// 				label
+     	// 			else
+     	// 			}
+     	// 		}
+     	// 	})
+
+
 	});
 	
 
